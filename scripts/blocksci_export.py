@@ -8,7 +8,7 @@ from functools import wraps
 from itertools import islice
 from multiprocessing import Pool, Value
 import time
-
+from multiprocessing.pool import ThreadPool
 
 from cassandra import ConsistencyLevel
 from cassandra.cluster import Cluster
@@ -73,7 +73,7 @@ class QueryManager(ABC):
             num_chunks = num_proc
         self.num_proc = num_proc
         self.num_chunks = num_chunks
-        self.pool = Pool(processes=num_proc,
+        self.pool = ThreadPool(processes=num_proc,
                          initializer=self._setup,
                          initargs=(cluster, chain, keyspace, cql_str))
 
