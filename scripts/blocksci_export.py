@@ -80,7 +80,8 @@ class QueryManager(ABC):
     @classmethod
     def _setup(cls, cluster, chain, keyspace, cql_str):
         cls.chain = chain
-        cls.session = cluster.connect()
+        thread_cluster = Cluster(cluster.contact_points)
+        cls.session = thread_cluster.connect()
         cls.session.default_timeout = 60
         cls.session.set_keyspace(keyspace)
         cls.prepared_stmt = cls.session.prepare(cql_str)
