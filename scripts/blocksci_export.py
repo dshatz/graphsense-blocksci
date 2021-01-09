@@ -61,6 +61,9 @@ def query_most_recent_block(cluster, keyspace):
     return max_height
 
 
+tx_counter = Value('d', 0)
+
+
 class QueryManager(ABC):
 
     # chosen to match the default in execute_concurrent_with_args
@@ -73,15 +76,14 @@ class QueryManager(ABC):
             num_chunks = num_proc
         self.num_proc = num_proc
         self.num_chunks = num_chunks
-        self.pool = ThreadPool(processes=num_proc,
+        self.pool = Pool(processes=num_proc,
                          initializer=self._setup,
                          initargs=(cluster, chain, keyspace, cql_str))
 
     @classmethod
     def _setup(cls, cluster, chain, keyspace, cql_str):
         cls.chain = chain
-        thread_cluster = Cluster(cluster.contact_points)
-        cls.session = thread_cluster.connect()
+        cls.session = cluster.connect()
         cls.session.default_timeout = 60
         cls.session.set_keyspace(keyspace)
         cls.prepared_stmt = cls.session.prepare(cql_str)
@@ -100,8 +102,6 @@ class QueryManager(ABC):
 
 
 class TxQueryManager(QueryManager):
-
-    counter = Value('d', 0)
 
     @classmethod
     def insert(cls, params):
@@ -136,10 +136,10 @@ class TxQueryManager(QueryManager):
 
             param_list = []
 
-            with cls.counter.get_lock():
-                cls.counter.value += curr_batch_size
-            if (cls.counter.value % 1e4) == 0:
-                print(f'#tx {cls.counter.value:,.0f}')
+            with tx_counter.get_lock():
+                tx_counter.value += curr_batch_size
+            if (tx_counter.value % 1e4) == 0:
+                print(f'#tx {tx_counter.value:,.0f}')
 
 
 class BlockTxQueryManager(QueryManager):
