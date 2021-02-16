@@ -68,7 +68,7 @@ class QueryManager(ABC):
 
     # chosen to match the default in execute_concurrent_with_args
     concurrency = 100
-    counter = Value('d', 0)
+    #counter = Value('d', 0)
 
     def __init__(self, cluster, keyspace, chain, cql_str,
                  num_proc=1, num_chunks=None):
